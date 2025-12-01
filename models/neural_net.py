@@ -19,11 +19,10 @@ def nn_run_models(X_train, Y_train, X_test, Y_test):
 
     models = nn_get_models(X_train.shape)
     for label, desc, model, callbacks in models:
-        history = model.fit(x=X_train, y=Y_train, batch_size=128, epochs=10, validation_split=0.2, callbacks=callbacks, verbose=0)
+        model.fit(x=X_train, y=Y_train, batch_size=128, epochs=10, validation_split=0.2, callbacks=callbacks, verbose=0)
 
         # Generate statistics
         eval = model.evaluate(X_test, Y_test, verbose=0)
-        print(eval)
         stats = pd.concat([stats, pd.DataFrame({
             "label": [label],
             "desc": [desc],
@@ -32,7 +31,7 @@ def nn_run_models(X_train, Y_train, X_test, Y_test):
             "precision": [eval[2]],
             "recall": [eval[3]],
             "f1_score": [eval[4]],
-            "confusion_matrix": [[[[eval[5], eval[6]]], [eval[7], eval[8]]]]
+            "confusion_matrix": [[[[int(eval[5]), int(eval[6])]], [int(eval[7]), int(eval[8])]]]
         })], ignore_index=True)
     return stats
 
@@ -53,8 +52,8 @@ def nn_get_models(X_shape):
     ] 
 
 def leaky_adam_bin_crossent(metrics, X_shape):
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=1)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=0)
     model = Sequential()
 
     # Add layers
