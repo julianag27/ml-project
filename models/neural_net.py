@@ -4,7 +4,6 @@ from keras.utils import to_categorical
 from keras.callbacks import ReduceLROnPlateau, EarlyStopping
 import pandas as pd
 
-
 def nn_run_models(X_train, Y_train, X_test, Y_test):
     # Initializing final stats table
     stats = pd.DataFrame({
@@ -15,7 +14,8 @@ def nn_run_models(X_train, Y_train, X_test, Y_test):
         "precision": [],
         "recall": [],
         "f1_score": [],
-        "confusion_matrix": []
+        "confusion_matrix": [],
+        "ROC/AUC": []
     })
 
     models = nn_get_models(X_train.shape)
@@ -36,8 +36,9 @@ def nn_run_models(X_train, Y_train, X_test, Y_test):
             "accuracy": [eval[1]],
             "precision": [eval[2]],
             "recall": [eval[3]],
-            "f1_score": [eval[4]],
-            "confusion_matrix": [[[[int(eval[5]), int(eval[6])]], [int(eval[7]), int(eval[8])]]]
+            "f1_score": [eval[4] if 'softmax' not in label else eval[4][1]],
+            "confusion_matrix": [[[[int(eval[5]), int(eval[6])]], [int(eval[7]), int(eval[8])]]],
+            "ROC/AUC": [eval[9]]
         })], ignore_index=True)
     return stats
 
@@ -50,11 +51,14 @@ def nn_get_models(X_shape):
         "true_negatives",
         "false_positives",
         "false_negatives",
-        "true_positives"
+        "true_positives",
+        "auc"
     ]
     # add models as functions and add the function to the list below
     return [
         leaky_adam(metrics, X_shape),
+        leaky_adam_x5(metrics, X_shape),
+        leaky_adam_x5_no_drop(metrics, X_shape),
         leaky_adam_1024(metrics, X_shape),
         leaky_adam_bin_crossent(metrics, X_shape),
         elu_adam_bin_crossent(metrics, X_shape),
@@ -64,7 +68,8 @@ def nn_get_models(X_shape):
         leaky_adam_cat_cross(metrics, X_shape),
         leaky_adam_softmax(metrics, X_shape),
         tanh_adam_1024_noearly(metrics, X_shape),
-        tanh_adam_1024_noearly_softmax(metrics, X_shape)
+        tanh_adam_1024_noearly_softmax(metrics, X_shape),
+        tanh_adam_1024_2_noearly_softmax(metrics, X_shape)
     ] 
 
 def leaky_adam(metrics, X_shape):
@@ -86,6 +91,67 @@ def leaky_adam(metrics, X_shape):
     label = "leaky_relu, adam, binary_crossentropy"
     desc ="\tActivation function(s): leaky_relu, sigmoid\n" \
         "\tLayers:\n\t\t128, leaky_relu\n\t\tDropout: 0.2\n\t\t64, leaky_relu\n\t\tDropout: 0.2\n\t\t1, sigmoid\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: binary_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 128\n" \
+        "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
+    callbacks = [reduce_lr, early_stopping]
+    return (label, desc, model, callbacks)
+
+def leaky_adam_x5(metrics, X_shape):
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(128, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(64, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(64, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(64, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(64, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation='sigmoid'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
+    
+    label = "leaky_relu, adam, binary_crossentropy, 5 layers"
+    desc ="\tActivation function(s): leaky_relu, sigmoid\n" \
+        "\tLayers:\n\t\t128, leaky_relu\n\t\tDropout: 0.2\n\t\t64, leaky_relu\n\t\tDropout: 0.2\n\t\t64, leaky_relu\n\t\tDropout: 0.2\n\t\t64, leaky_relu\n\t\tDropout: 0.2\n\t\t64, leaky_relu\n\t\tDropout: 0.2\n\t\t1, sigmoid\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: binary_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 128\n" \
+        "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
+    callbacks = [reduce_lr, early_stopping]
+    return (label, desc, model, callbacks)
+
+def leaky_adam_x5_no_drop(metrics, X_shape):
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(128, activation='leaky_relu'))
+    model.add(Dense(64, activation='leaky_relu'))
+    model.add(Dense(64, activation='leaky_relu'))
+    model.add(Dense(64, activation='leaky_relu'))
+    model.add(Dense(64, activation='leaky_relu'))
+    model.add(Dense(1, activation='sigmoid'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
+    
+    label = "leaky_relu, adam, binary_crossentropy, 5 layers, no dropout"
+    desc ="\tActivation function(s): leaky_relu, sigmoid\n" \
+        "\tLayers:\n\t\t128, leaky_relu\n\t\t64, leaky_relu\n\t\t64, leaky_relu\n\t\t64, leaky_relu\n\t\t64, leaky_relu\n\t\t1, sigmoid\n" \
         "\tOptimizer: adam\n" \
         "\tLoss: binary_crossentropy\n" \
         "\tEpochs: 10\n" \
@@ -353,6 +419,34 @@ def tanh_adam_1024_noearly_softmax(metrics, X_shape):
     label = "tahn, adam, 1024, noearly, softmax"
     desc ="\tActivation function(s): tanh, softmax\n" \
         "\tLayers:\n\t\t1024, tanh\n\t\tDropout: 0.2\n\t\t256, tanh\n\t\tDropout: 0.2\n\t\t2, softmax\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: binary_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 1024\n" \
+        "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
+    callbacks = [reduce_lr]
+    return (label, desc, model, callbacks)
+
+def tanh_adam_1024_2_noearly_softmax(metrics, X_shape):
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(1024, activation='tanh'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1024, activation='tanh'))
+    model.add(Dropout(0.2))
+    model.add(Dense(256, activation='tanh'))
+    model.add(Dropout(0.2))
+    model.add(Dense(2, activation='softmax'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
+    
+    label = "tahn, adam, 1024x2, noearly, softmax"
+    desc ="\tActivation function(s): tanh, softmax\n" \
+        "\tLayers:\n\t\t1024, tanh\n\t\tDropout: 0.2\n\t\t1024, tanh\n\t\tDropout: 0.2\n\t\t256, tanh\n\t\tDropout: 0.2\n\t\t2, softmax\n" \
         "\tOptimizer: adam\n" \
         "\tLoss: binary_crossentropy\n" \
         "\tEpochs: 10\n" \
