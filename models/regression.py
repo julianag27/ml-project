@@ -1,6 +1,4 @@
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.linear_model import LinearRegression, LogisticRegression, LogisticRegressionCV, Ridge, Lasso, ElasticNet
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import pandas as pd
 
@@ -22,7 +20,7 @@ def rg_run_models(X_train, Y_train, X_test, Y_test):
         # Generate statistics
         model.fit(X_train, Y_train)
         Y_pred = model.predict(X_test)
-        if isinstance(model, LinearRegression):
+        if isinstance(model, (LinearRegression, Ridge, Lasso, ElasticNet)):
             Y_pred = (Y_pred >= 0.5).astype(int)
         
         cm = confusion_matrix(Y_test, Y_pred)
@@ -44,7 +42,10 @@ def rg_get_models():
     return [
         linear(),
         logistic(),
-        logistic_cv()
+        logistic_cv(),
+        ridge(),
+        lasso(),
+        elastic()
     ]
 
 ### Linear Regression
@@ -58,3 +59,15 @@ def logistic():
 ### Logistic Regression CV
 def logistic_cv():
     return ("Logistic Regression CV", "\tClass Weight: Balanced\n\tSolver: Saga\n\tRandom State: 42\n\tMax Iterations: 1000", LogisticRegressionCV(class_weight='balanced', solver='saga', random_state=42, max_iter=1000))
+
+### Ridge Regression
+def ridge():
+    return ("Ridge Regression", "\tMax Iterations: 1000", Ridge(max_iter=1000))
+    
+### Lasso Regression
+def lasso():
+    return ("Lasso Regression", "\tRandom State: 42", Lasso(random_state=42))
+
+### Elastic Net Regularization
+def elastic():
+    return ("Elastic Net Regression", "\tRandom State: 42", ElasticNet(random_state=42))
