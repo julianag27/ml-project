@@ -57,7 +57,6 @@ def nn_get_models(X_shape):
         tanh_adam_bin_crossent(metrics, X_shape),
         leaky_adam_cat_cross(metrics, X_shape),
         leaky_adam_softmax(metrics, X_shape),
-        leaky_adam_reduce(metrics, X_shape),
         tanh_adam_1024_noearly(metrics, X_shape)
     ] 
 
@@ -293,33 +292,6 @@ def leaky_adam_softmax(metrics, X_shape):
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
     
     label = "leaky_relu, softmax, adam, binary_crossentropy"
-    desc ="\tActivation function(s): leaky_relu, softmax\n" \
-        "\tLayers:\n\t\t128, leaky_relu\n\t\tDropout: 0.2\n\t\t64, leaky_relu\n\t\tDropout: 0.2\n\t\t1, softmax\n" \
-        "\tOptimizer: adam\n" \
-        "\tLoss: binary_crossentropy\n" \
-        "\tEpochs: 10\n" \
-        "\tBatch Size: 128\n" \
-        "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
-    callbacks = [reduce_lr, early_stopping]
-    return (label, desc, model, callbacks)
-
-def leaky_adam_reduce(metrics, X_shape):
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=1)
-    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=0)
-    model = Sequential()
-
-    # Add layers
-    model.add(Input(shape=(X_shape[1],)))
-    model.add(Dense(128, activation='leaky_relu'))
-    model.add(Dropout(0.2))
-    model.add(Dense(64, activation='leaky_relu'))
-    model.add(Dropout(0.2))
-    model.add(Dense(1, activation='softmax'))
-
-    # Compile Model
-    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
-    
-    label = "leaky_relu, verbose1, softmax, binary_crossentropy"
     desc ="\tActivation function(s): leaky_relu, softmax\n" \
         "\tLayers:\n\t\t128, leaky_relu\n\t\tDropout: 0.2\n\t\t64, leaky_relu\n\t\tDropout: 0.2\n\t\t1, softmax\n" \
         "\tOptimizer: adam\n" \
