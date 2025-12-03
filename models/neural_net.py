@@ -24,6 +24,21 @@ def nn_run_models(X_train, Y_train, X_test, Y_test):
         if 'softmax' in label:
             model.fit(x=X_train, y=to_categorical(Y_train), batch_size=128, epochs=10, validation_split=0.2, callbacks=callbacks, verbose=0)
             eval = model.evaluate(X_test, to_categorical(Y_test), verbose=0)
+            tn = fp = fn = tp = 0
+            pred = model.predict(X_test, verbose=0)
+            for true, (zero, one) in zip(Y_test, pred):
+                if true == 1 and one == 1:
+                    tp += 1
+                if true == 1 and one == 0:
+                    fn += 1
+                if true == 0 and one == 1:
+                    fp += 1
+                if true == 0 and one == 0:
+                    tn += 1
+            eval[5] = tn
+            eval[6] = fp
+            eval[7] = fn
+            eval[8] = tp
         else:
             model.fit(x=X_train, y=Y_train, batch_size=128, epochs=10, validation_split=0.2, callbacks=callbacks, verbose=0)
             eval = model.evaluate(X_test, Y_test, verbose=0)
@@ -37,7 +52,7 @@ def nn_run_models(X_train, Y_train, X_test, Y_test):
             "precision": [eval[2]],
             "recall": [eval[3]],
             "f1_score": [eval[4] if 'softmax' not in label else eval[4][1]],
-            "confusion_matrix": [[[[int(eval[5]), int(eval[6])]], [int(eval[7]), int(eval[8])]]],
+            "confusion_matrix": [[[int(eval[5]), int(eval[6])], [int(eval[7]), int(eval[8])]]],
             "ROC/AUC": [eval[9]]
         })], ignore_index=True)
     return stats
