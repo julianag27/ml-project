@@ -1,4 +1,6 @@
+from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegressionCV
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 import pandas as pd
 
@@ -20,12 +22,15 @@ def rg_run_models(X_train, Y_train, X_test, Y_test):
         # Generate statistics
         model.fit(X_train, Y_train)
         Y_pred = model.predict(X_test)
+        if isinstance(model, LinearRegression):
+            Y_pred = (Y_pred >= 0.5).astype(int)
+        
         cm = confusion_matrix(Y_test, Y_pred)
 
         stats = pd.concat([stats, pd.DataFrame({
             "label": [label],
             "desc": [desc],
-            "model_type": ["SVM"],
+            "model_type": ["Regression"],
             "accuracy": [accuracy_score(Y_test, Y_pred)],
             "precision": [precision_score(Y_test, Y_pred)],
             "recall": [recall_score(Y_test, Y_pred)],
@@ -37,8 +42,19 @@ def rg_run_models(X_train, Y_train, X_test, Y_test):
 def rg_get_models():
     # add models as functions and add the function to the list below
     return [
-        logistic()
+        linear(),
+        logistic(),
+        logistic_cv()
     ]
 
+### Linear Regression
+def linear():
+    return ("Linear Regression", "\tDefault Settings", LinearRegression())
+
+### Logistic Regression
 def logistic():
-    return ("Logistic Regression", "\tClass Weight: Balanced\n\tMax Iter: 5000", LogisticRegression(class_weight='balanced', max_iter=5000))
+    return ("Logistic Regression", "\tClass Weight: Balanced\n\tRandom State: 42", LogisticRegression(class_weight='balanced', random_state=42))
+
+### Logistic Regression CV
+def logistic_cv():
+    return ("Logistic Regression CV", "\tClass Weight: Balanced\n\tSolver: Saga\n\tRandom State: 42\n\tMax Iterations: 1000", LogisticRegressionCV(class_weight='balanced', solver='saga', random_state=42, max_iter=1000))
