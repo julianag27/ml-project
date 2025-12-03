@@ -1,5 +1,5 @@
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score
 import pandas as pd
 
 
@@ -13,7 +13,8 @@ def svm_run_models(X_train, Y_train, X_test, Y_test):
         "precision": [],
         "recall": [],
         "f1_score": [],
-        "confusion_matrix": []
+        "confusion_matrix": [],
+        "ROC/AUC": []
     })
 
     models = svm_get_models()
@@ -31,7 +32,8 @@ def svm_run_models(X_train, Y_train, X_test, Y_test):
             "precision": [precision_score(Y_test, Y_pred)],
             "recall": [recall_score(Y_test, Y_pred)],
             "f1_score": [f1_score(Y_test, Y_pred)],
-            "confusion_matrix": [[[int(cm[0][0]), int(cm[0][1])], [int(cm[1][0]), int(cm[1][1])]]] # turns CM from ndarray into a python nested list
+            "confusion_matrix": [[[int(cm[0][0]), int(cm[0][1])], [int(cm[1][0]), int(cm[1][1])]]], # turns CM from ndarray into a python nested list
+            "ROC/AUC": [roc_auc_score(Y_test, Y_pred)]
         })], ignore_index=True)
     return stats
 
