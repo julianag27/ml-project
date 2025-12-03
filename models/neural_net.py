@@ -48,10 +48,20 @@ def nn_get_models(X_shape):
     ]
     # add models as functions and add the function to the list below
     return [
-        leaky_adam_bin_crossent(metrics, X_shape)
+        leaky_adam(metrics, X_shape),
+        leaky_adam_1024(metrics, X_shape),
+        leaky_adam_bin_crossent(metrics, X_shape),
+        elu_adam_bin_crossent(metrics, X_shape),
+        sigmoid_adam_bin_crossent(metrics, X_shape),
+        lin_adam_bin_crossent(metrics, X_shape),
+        tanh_adam_bin_crossent(metrics, X_shape),
+        leaky_adam_cat_cross(metrics, X_shape),
+        leaky_adam_softmax(metrics, X_shape),
+        leaky_adam_reduce(metrics, X_shape),
+        tanh_adam_1024_noearly(metrics, X_shape)
     ] 
 
-def leaky_adam_bin_crossent(metrics, X_shape):
+def leaky_adam(metrics, X_shape):
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
     early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=0)
     model = Sequential()
@@ -76,4 +86,272 @@ def leaky_adam_bin_crossent(metrics, X_shape):
         "\tBatch Size: 128\n" \
         "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
     callbacks = [reduce_lr, early_stopping]
+    return (label, desc, model, callbacks)
+
+def leaky_adam_1024(metrics, X_shape):
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(1024, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(256, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation='sigmoid'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
+    
+    label = "leaky_relu, adam, 1024y"
+    desc ="\tActivation function(s): leaky_relu, sigmoid\n" \
+        "\tLayers:\n\t\t1024, leaky_relu\n\t\tDropout: 0.2\n\t\t256, leaky_relu\n\t\tDropout: 0.2\n\t\t1, sigmoid\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: binary_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 1024\n" \
+        "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
+    callbacks = [reduce_lr, early_stopping]
+    return (label, desc, model, callbacks)
+
+def leaky_adam_bin_crossent(metrics, X_shape):
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(128, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(128, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation='sigmoid'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
+    
+    label = "leaky_relu, adam, binary_crossentropy, no_early_stop"
+    desc ="\tActivation function(s): leaky_relu, sigmoid\n" \
+        "\tLayers:\n\t\t128, leaky_relu\n\t\tDropout: 0.2\n\t\t128, leaky_relu\n\t\tDropout: 0.2\n\t\t1, sigmoid\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: binary_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 128\n" \
+        "\tCallbacks: ReduceLR (val_loss)"
+    callbacks = [reduce_lr]
+    return (label, desc, model, callbacks)
+
+def elu_adam_bin_crossent(metrics, X_shape):
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(128, activation='elu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(128, activation='elu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation='sigmoid'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
+    
+    label = "elu, adam, binary_crossentropy"
+    desc ="\tActivation function(s): elu, sigmoid\n" \
+        "\tLayers:\n\t\t128, elu\n\t\tDropout: 0.2\n\t\t64, elu\n\t\tDropout: 0.2\n\t\t1, sigmoid\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: binary_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 128\n" \
+        "\tCallbacks: ReduceLR (val_loss)"
+    callbacks = [reduce_lr]
+    return (label, desc, model, callbacks)
+
+def sigmoid_adam_bin_crossent(metrics, X_shape):
+
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(128, activation='sigmoid'))
+    model.add(Dropout(0.2))
+    model.add(Dense(64, activation='sigmoid'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation='sigmoid'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
+    
+    label = "sigmoid, adam, binary_crossentropy"
+    desc ="\tActivation function(s): sigmoid\n" \
+        "\tLayers:\n\t\t128, sigmoid\n\t\tDropout: 0.2\n\t\t64, sigmoid\n\t\tDropout: 0.2\n\t\t1, sigmoid\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: binary_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 128\n" \
+        "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
+    callbacks = [reduce_lr, early_stopping]
+    return (label, desc, model, callbacks)
+
+def lin_adam_bin_crossent(metrics, X_shape):
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(128, activation='linear'))
+    model.add(Dropout(0.2))
+    model.add(Dense(64, activation='linear'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation='sigmoid'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
+    
+    label = "linaer, adam, binary_crossentropy"
+    desc ="\tActivation function(s): linear, sigmoid\n" \
+        "\tLayers:\n\t\t128, linear\n\t\tDropout: 0.2\n\t\t64, linear\n\t\tDropout: 0.2\n\t\t1, sigmoid\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: binary_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 128\n" \
+        "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
+    callbacks = [reduce_lr, early_stopping]
+    return (label, desc, model, callbacks)
+
+def tanh_adam_bin_crossent(metrics, X_shape):
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(128, activation='tanh'))
+    model.add(Dropout(0.2))
+    model.add(Dense(64, activation='tanh'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation='sigmoid'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
+    
+    label = "tanh, adam, binary_crossentropy"
+    desc ="\tActivation function(s): tanh, sigmoid\n" \
+        "\tLayers:\n\t\t128, tanh\n\t\tDropout: 0.2\n\t\t64, tanh\n\t\tDropout: 0.2\n\t\t1, sigmoid\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: binary_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 128\n" \
+        "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
+    callbacks = [reduce_lr, early_stopping]
+    return (label, desc, model, callbacks)
+
+def leaky_adam_cat_cross(metrics, X_shape):
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(128, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(64, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation='sigmoid'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=metrics)
+    
+    label = "leaky_relu, adam, categorical_crossentropy"
+    desc ="\tActivation function(s): leaky_relu, sigmoid\n" \
+        "\tLayers:\n\t\t128, leaky_relu\n\t\tDropout: 0.2\n\t\t64, leaky_relu\n\t\tDropout: 0.2\n\t\t1, sigmoid\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: categorical_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 128\n" \
+        "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
+    callbacks = [reduce_lr, early_stopping]
+    return (label, desc, model, callbacks)
+
+def leaky_adam_softmax(metrics, X_shape):
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(128, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(64, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation='softmax'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
+    
+    label = "leaky_relu, softmax, adam, binary_crossentropy"
+    desc ="\tActivation function(s): leaky_relu, softmax\n" \
+        "\tLayers:\n\t\t128, leaky_relu\n\t\tDropout: 0.2\n\t\t64, leaky_relu\n\t\tDropout: 0.2\n\t\t1, softmax\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: binary_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 128\n" \
+        "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
+    callbacks = [reduce_lr, early_stopping]
+    return (label, desc, model, callbacks)
+
+def leaky_adam_reduce(metrics, X_shape):
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=1)
+    early_stopping = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(128, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(64, activation='leaky_relu'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation='softmax'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
+    
+    label = "leaky_relu, verbose1, softmax, binary_crossentropy"
+    desc ="\tActivation function(s): leaky_relu, softmax\n" \
+        "\tLayers:\n\t\t128, leaky_relu\n\t\tDropout: 0.2\n\t\t64, leaky_relu\n\t\tDropout: 0.2\n\t\t1, softmax\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: binary_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 128\n" \
+        "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
+    callbacks = [reduce_lr, early_stopping]
+    return (label, desc, model, callbacks)
+
+def tanh_adam_1024_noearly(metrics, X_shape):
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, min_lr=1e-6, verbose=0)
+    model = Sequential()
+
+    # Add layers
+    model.add(Input(shape=(X_shape[1],)))
+    model.add(Dense(1024, activation='tanh'))
+    model.add(Dropout(0.2))
+    model.add(Dense(256, activation='tanh'))
+    model.add(Dropout(0.2))
+    model.add(Dense(1, activation='sigmoid'))
+
+    # Compile Model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=metrics)
+    
+    label = "tahn, adam, 1024, noearly"
+    desc ="\tActivation function(s): tanh, sigmoid\n" \
+        "\tLayers:\n\t\t1024, tanh\n\t\tDropout: 0.2\n\t\t256, tanh\n\t\tDropout: 0.2\n\t\t1, sigmoid\n" \
+        "\tOptimizer: adam\n" \
+        "\tLoss: binary_crossentropy\n" \
+        "\tEpochs: 10\n" \
+        "\tBatch Size: 1024\n" \
+        "\tCallbacks: ReduceLR (val_loss), EarlyStopping (val_loss)"
+    callbacks = [reduce_lr]
     return (label, desc, model, callbacks)
