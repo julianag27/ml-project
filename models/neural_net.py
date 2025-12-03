@@ -27,13 +27,13 @@ def nn_run_models(X_train, Y_train, X_test, Y_test):
             tn = fp = fn = tp = 0
             pred = model.predict(X_test, verbose=0)
             for true, (zero, one) in zip(Y_test, pred):
-                if true == 1 and one == 1:
+                if true == 1 and one >= 0.5:
                     tp += 1
-                if true == 1 and one == 0:
+                if true == 1 and one < 0.5:
                     fn += 1
-                if true == 0 and one == 1:
+                if true == 0 and one >= 0.5:
                     fp += 1
-                if true == 0 and one == 0:
+                if true == 0 and one < 0.5:
                     tn += 1
             eval[5] = tn
             eval[6] = fp

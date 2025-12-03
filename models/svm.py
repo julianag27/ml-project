@@ -68,14 +68,14 @@ def rbf2():
             SVC(C=10, kernel='rbf', gamma='scale'))
 
 def rbf3():
-    return ("RBF C=1 gamma=1",
-            "\tRegularization Param: 1\n\tKernel: RBF\n\tGamma: 1",
-            SVC(C=1, kernel='rbf', gamma= 1.0))
+    return ("RBF C=100 gamma=scale",
+            "\tRegularization Param: 100\n\tKernel: RBF\n\tGamma: scale",
+            SVC(C=100, kernel='rbf', gamma='scale'))
 
 def rbf4():
-    return ("RBF C=1 gamma=0.5",
-            "\tRegularization Param: 1\n\tKernel: RBF\n\tGamma: 0.5",
-            SVC(C=1, kernel='rbf', gamma=0.5))
+    return ("RBF C=1 gamma=0.05",
+            "\tRegularization Param: 1\n\tKernel: RBF\n\tGamma: 0.05",
+            SVC(C=1, kernel='rbf', gamma=0.05))
 
 def rbf5():
     return ("RBF C=0.1 gamma=scale",
