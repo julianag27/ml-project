@@ -1,4 +1,4 @@
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score
 import pandas as pd
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
@@ -13,7 +13,7 @@ def ens_run_models(X_train, Y_train, X_test, Y_test):
     stats = pd.DataFrame({
         "label": [], "desc": [], "model_type": [],
         "accuracy": [], "precision": [], "recall": [], "f1_score": [],
-        "confusion_matrix": []
+        "confusion_matrix": [], "ROC/AUC": []
     })
 
     models = ens_get_models()
@@ -33,7 +33,8 @@ def ens_run_models(X_train, Y_train, X_test, Y_test):
             "precision": [precision_score(Y_test, Y_pred)],
             "recall": [recall_score(Y_test, Y_pred)],
             "f1_score": [f1_score(Y_test, Y_pred)],
-            "confusion_matrix": [[[int(cm[0][0]), int(cm[0][1])], [int(cm[1][0]), int(cm[1][1])]]]
+            "confusion_matrix": [[[int(cm[0][0]), int(cm[0][1])], [int(cm[1][0]), int(cm[1][1])]]],
+            "ROC/AUC": [roc_auc_score(Y_test, Y_pred)]
         })], ignore_index=True)
     return stats
 
