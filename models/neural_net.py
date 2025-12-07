@@ -26,7 +26,7 @@ def nn_run_models(X_train, Y_train, X_test, Y_test):
             eval = model.evaluate(X_test, to_categorical(Y_test), verbose=0)
             tn = fp = fn = tp = 0
             pred = model.predict(X_test, verbose=0)
-            for true, (zero, one) in zip(Y_test, pred):
+            for true, (_, one) in zip(Y_test, pred):
                 if true == 1 and one >= 0.5:
                     tp += 1
                 if true == 1 and one < 0.5:
@@ -44,15 +44,19 @@ def nn_run_models(X_train, Y_train, X_test, Y_test):
             eval = model.evaluate(X_test, Y_test, verbose=0)
 
         # Generate statistics
+        tn = int(eval[5])
+        fp = int(eval[6])
+        fn = int(eval[7])
+        tp = int(eval[8])
         stats = pd.concat([stats, pd.DataFrame({
             "label": [label],
             "desc": [desc],
             "model_type": ["Neural Net"],
-            "accuracy": [eval[1]],
-            "precision": [eval[2]],
-            "recall": [eval[3]],
-            "f1_score": [eval[4] if 'softmax' not in label else eval[4][1]],
-            "confusion_matrix": [[[int(eval[5]), int(eval[6])], [int(eval[7]), int(eval[8])]]],
+            "accuracy": [(tn+tp)/(tn+fp+fn+tp)],
+            "precision": [tp/(tp+fp)],
+            "recall": [tp/(tp+fn)],
+            "f1_score": [tp/(tp + ((fp+fn)/2))],
+            "confusion_matrix": [[[tn, fp], [fn, tp]]],
             "ROC/AUC": [eval[9]]
         })], ignore_index=True)
     return stats
