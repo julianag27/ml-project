@@ -10,7 +10,8 @@ def nn_run_models(X_train, Y_train, X_test, Y_test):
         "label": [],
         "desc": [],
         "model_type": [],
-        "accuracy": [],
+        "train_accuracy": [],
+        "test_accuracy": [],
         "precision": [],
         "recall": [],
         "f1_score": [],
@@ -42,6 +43,7 @@ def nn_run_models(X_train, Y_train, X_test, Y_test):
         else:
             model.fit(x=X_train, y=Y_train, batch_size=128, epochs=10, validation_split=0.2, callbacks=callbacks, verbose=0)
             eval = model.evaluate(X_test, Y_test, verbose=0)
+            train_eval = model.evaluate(X_train, Y_train, verbose=0)
 
         # Generate statistics
         tn = int(eval[5])
@@ -52,7 +54,8 @@ def nn_run_models(X_train, Y_train, X_test, Y_test):
             "label": [label],
             "desc": [desc],
             "model_type": ["Neural Net"],
-            "accuracy": [(tn+tp)/(tn+fp+fn+tp)],
+            "train_accuracy": [train_eval[1]],
+            "test_accuracy": [(tn+tp)/(tn+fp+fn+tp)],
             "precision": [tp/(tp+fp)],
             "recall": [tp/(tp+fn)],
             "f1_score": [tp/(tp + ((fp+fn)/2))],

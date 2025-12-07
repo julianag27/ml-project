@@ -11,8 +11,8 @@ def ens_run_models(X_train, Y_train, X_test, Y_test):
     Runs all ensemble models defined in ens_get_models and returns a stats DataFrame.
     """
     stats = pd.DataFrame({
-        "label": [], "desc": [], "model_type": [],
-        "accuracy": [], "precision": [], "recall": [], "f1_score": [],
+        "label": [], "desc": [], "model_type": [], "train_accuracy": [],
+        "test_accuracy": [], "precision": [], "recall": [], "f1_score": [],
         "confusion_matrix": [], "ROC/AUC": []
     })
 
@@ -29,7 +29,8 @@ def ens_run_models(X_train, Y_train, X_test, Y_test):
             "label": [label],
             "desc": [desc],
             "model_type": ["ENS"],
-            "accuracy": [accuracy_score(Y_test, Y_pred)],
+            "train_accuracy": [model.score(X_train, Y_train)],
+            "test_accuracy": [accuracy_score(Y_test, Y_pred)],
             "precision": [precision_score(Y_test, Y_pred)],
             "recall": [recall_score(Y_test, Y_pred)],
             "f1_score": [f1_score(Y_test, Y_pred)],
